@@ -1,4 +1,4 @@
-import { Business, SearchArea } from '../types/business';
+import { Business, SearchArea, SearchType } from '../types/business';
 import { mapGoogleTypeToCategory } from './categoryIcons';
 import { analyzeSwedishBusiness, getSwedishSearchQueries } from './swedishDetector';
 
@@ -42,9 +42,31 @@ interface PlaceDetailsResponse {
 
 const GOOGLE_PLACES_BASE_URL = 'https://maps.googleapis.com/maps/api/place';
 
-export async function searchBusinessesInArea(
+// Get search queries based on search type
+function getSearchQueriesForType(searchType: SearchType): { keywords: string[]; types: string[] } {
+  switch (searchType) {
+    case 'swedish_businesses':
+      return { keywords: getSwedishSearchQueries(), types: [] };
+    case 'attractions':
+      return { keywords: ['tourist attraction', 'viewpoint', 'landmark'], types: ['tourist_attraction', 'point_of_interest'] };
+    case 'nature':
+      return { keywords: ['park', 'beach', 'nature reserve', 'garden'], types: ['park', 'natural_feature'] };
+    case 'culture':
+      return { keywords: ['museum', 'church', 'art gallery', 'historic'], types: ['museum', 'church', 'art_gallery'] };
+    case 'restaurants':
+      return { keywords: [], types: ['restaurant', 'cafe', 'bar'] };
+    case 'all':
+      return { keywords: [...getSwedishSearchQueries(), 'restaurant', 'attraction'], types: ['restaurant', 'tourist_attraction', 'museum', 'park'] };
+    default:
+      return { keywords: getSwedishSearchQueries(), types: [] };
+  }
+}
+
+
+export async function searchPlacesInArea(
   area: SearchArea,
-  apiKey: string
+  apiKey: string,
+  searchType: SearchType = 'swedish_businesses'
 ): Promise<Business[]> {
   const center = getAreaCenter(area);
   const radius = getAreaRadius(area);
@@ -309,3 +331,6 @@ function isPointInArea(
 
   return inside;
 }
+
+// Alias for backwards compatibility
+export const searchBusinessesInArea = searchPlacesInArea;

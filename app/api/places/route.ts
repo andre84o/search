@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SearchArea, SearchResult } from '../../types/business';
-import { searchBusinessesInArea } from '../../lib/googlePlaces';
+import { SearchArea, SearchResult, SearchType } from '../../types/business';
+import { searchPlacesInArea } from '../../lib/googlePlaces';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { area } = body as { area: SearchArea };
+    const { area, searchType = 'swedish_businesses' } = body as {
+      area: SearchArea;
+      searchType?: SearchType;
+    };
 
     if (!area || !area.coordinates || area.coordinates.length === 0) {
       return NextResponse.json(
@@ -18,10 +21,10 @@ export async function POST(request: NextRequest) {
 
     if (!apiKey) {
       // Return demo data if no API key
-      return NextResponse.json(getDemoData(area));
+      return NextResponse.json(getDemoData(area, searchType));
     }
 
-    const businesses = await searchBusinessesInArea(area, apiKey);
+    const businesses = await searchPlacesInArea(area, apiKey, searchType);
 
     const result: SearchResult = {
       businesses,
@@ -34,15 +37,15 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Places API error:', error);
     return NextResponse.json(
-      { error: 'Kunde inte söka efter företag' },
+      { error: 'Kunde inte söka efter platser' },
       { status: 500 }
     );
   }
 }
 
 // Demo data for testing without API key
-function getDemoData(area: SearchArea): SearchResult {
-  const demoBusinesses = [
+function getDemoData(area: SearchArea, searchType: SearchType): SearchResult {
+  const swedishBusinesses = [
     {
       id: 'demo-1',
       name: 'Svenska Baren Torrevieja',
@@ -75,103 +78,136 @@ function getDemoData(area: SearchArea): SearchResult {
       swedishConfidence: 50,
       swedishIndicators: ['Nyckelord: "stockholm"'],
     },
+  ];
+
+  const attractions = [
     {
-      id: 'demo-3',
-      name: 'Nordic Real Estate',
-      address: 'Plaza de la Constitución 5, 03181 Torrevieja, Spain',
-      phone: '+34 966 345 678',
-      website: 'https://nordicrealestate.com',
-      photoUrl: undefined,
-      rating: 4.8,
-      totalRatings: 45,
-      types: ['real_estate_agency'],
-      category: 'real_estate' as const,
-      location: { lat: 37.9770, lng: -0.6850 },
-      isSwedish: true,
-      swedishConfidence: 40,
-      swedishIndicators: ['Nyckelord: "nordic"'],
-    },
-    {
-      id: 'demo-4',
-      name: 'Scandinavian Hair Studio',
-      address: 'Calle Ramón Gallud 12, 03181 Torrevieja, Spain',
-      phone: '+34 965 234 567',
+      id: 'demo-attr-1',
+      name: 'Parque Natural de las Lagunas de La Mata',
+      address: 'Torrevieja, Alicante, Spain',
+      phone: undefined,
       website: undefined,
       photoUrl: undefined,
-      rating: 4.6,
-      totalRatings: 72,
-      types: ['hair_care', 'beauty_salon'],
-      category: 'beauty' as const,
-      location: { lat: 37.9798, lng: -0.6795 },
-      isSwedish: true,
-      swedishConfidence: 45,
-      swedishIndicators: ['Nyckelord: "scandinavian"'],
+      rating: 4.7,
+      totalRatings: 1250,
+      types: ['park', 'natural_feature'],
+      category: 'other' as const,
+      location: { lat: 38.0123, lng: -0.6789 },
+      isSwedish: false,
+      swedishConfidence: 0,
+      swedishIndicators: [],
     },
     {
-      id: 'demo-5',
-      name: 'Köttbullar & More',
-      address: 'Paseo Vista Alegre 8, 03182 Torrevieja, Spain',
-      phone: '+34 966 456 789',
+      id: 'demo-attr-2',
+      name: 'Playa del Cura',
+      address: 'Torrevieja, Alicante, Spain',
+      phone: undefined,
+      website: undefined,
+      photoUrl: undefined,
+      rating: 4.5,
+      totalRatings: 2340,
+      types: ['beach', 'point_of_interest'],
+      category: 'other' as const,
+      location: { lat: 37.9765, lng: -0.6834 },
+      isSwedish: false,
+      swedishConfidence: 0,
+      swedishIndicators: [],
+    },
+  ];
+
+  const nature = [
+    {
+      id: 'demo-nat-1',
+      name: 'Salinas de Torrevieja',
+      address: 'Torrevieja, Alicante, Spain',
+      phone: undefined,
+      website: undefined,
+      photoUrl: undefined,
+      rating: 4.8,
+      totalRatings: 3450,
+      types: ['natural_feature', 'point_of_interest'],
+      category: 'other' as const,
+      location: { lat: 37.9845, lng: -0.7123 },
+      isSwedish: false,
+      swedishConfidence: 0,
+      swedishIndicators: [],
+    },
+  ];
+
+  const culture = [
+    {
+      id: 'demo-cult-1',
+      name: 'Museo del Mar y de la Sal',
+      address: 'Calle Patricio Pérez 10, Torrevieja',
+      phone: '+34 965 710 273',
       website: undefined,
       photoUrl: undefined,
       rating: 4.3,
-      totalRatings: 156,
-      types: ['restaurant', 'food'],
-      category: 'restaurant' as const,
-      location: { lat: 37.9755, lng: -0.6888 },
-      isSwedish: true,
-      swedishConfidence: 60,
-      swedishIndicators: ['Nyckelord: "köttbullar"', 'Svenskt tecken: "ö"'],
+      totalRatings: 567,
+      types: ['museum'],
+      category: 'other' as const,
+      location: { lat: 37.9789, lng: -0.6812 },
+      isSwedish: false,
+      swedishConfidence: 0,
+      swedishIndicators: [],
     },
     {
-      id: 'demo-6',
-      name: 'Swedish Medical Center',
-      address: 'Calle Concordia 25, 03181 Torrevieja, Spain',
-      phone: '+34 965 567 890',
-      website: 'https://swedishmedical.es',
+      id: 'demo-cult-2',
+      name: 'Iglesia de la Inmaculada Concepción',
+      address: 'Plaza de la Constitución, Torrevieja',
+      phone: undefined,
+      website: undefined,
       photoUrl: undefined,
-      rating: 4.9,
+      rating: 4.6,
       totalRatings: 234,
-      types: ['doctor', 'health'],
-      category: 'health' as const,
-      location: { lat: 37.9802, lng: -0.6778 },
-      isSwedish: true,
-      swedishConfidence: 70,
-      swedishIndicators: ['Nyckelord: "swedish"'],
+      types: ['church', 'place_of_worship'],
+      category: 'other' as const,
+      location: { lat: 37.9778, lng: -0.6845 },
+      isSwedish: false,
+      swedishConfidence: 0,
+      swedishIndicators: [],
     },
+  ];
+
+  const restaurants = [
     {
-      id: 'demo-7',
-      name: 'Malmö Bygg & Renovering',
-      address: 'Calle Antonio Machado 18, 03183 Torrevieja, Spain',
-      phone: '+34 966 678 901',
+      id: 'demo-rest-1',
+      name: 'Restaurante La Esquina',
+      address: 'Calle Ramón Gallud 45, Torrevieja',
+      phone: '+34 965 123 789',
       website: undefined,
       photoUrl: undefined,
       rating: 4.4,
-      totalRatings: 38,
-      types: ['general_contractor', 'construction'],
-      category: 'construction' as const,
-      location: { lat: 37.9720, lng: -0.6910 },
-      isSwedish: true,
-      swedishConfidence: 55,
-      swedishIndicators: ['Nyckelord: "malmö"', 'Svenskt tecken: "ö"'],
-    },
-    {
-      id: 'demo-8',
-      name: 'Göteborg Auto Service',
-      address: 'Polígono Industrial, 03184 Torrevieja, Spain',
-      phone: '+34 965 789 123',
-      website: undefined,
-      photoUrl: undefined,
-      rating: 4.1,
-      totalRatings: 67,
-      types: ['car_repair', 'automotive'],
-      category: 'automotive' as const,
-      location: { lat: 37.9680, lng: -0.7050 },
-      isSwedish: true,
-      swedishConfidence: 50,
-      swedishIndicators: ['Nyckelord: "göteborg"', 'Svenskt tecken: "ö"'],
+      totalRatings: 789,
+      types: ['restaurant', 'food'],
+      category: 'restaurant' as const,
+      location: { lat: 37.9801, lng: -0.6798 },
+      isSwedish: false,
+      swedishConfidence: 0,
+      swedishIndicators: [],
     },
   ];
+
+  let demoBusinesses;
+  switch (searchType) {
+    case 'attractions':
+      demoBusinesses = attractions;
+      break;
+    case 'nature':
+      demoBusinesses = nature;
+      break;
+    case 'culture':
+      demoBusinesses = culture;
+      break;
+    case 'restaurants':
+      demoBusinesses = restaurants;
+      break;
+    case 'all':
+      demoBusinesses = [...swedishBusinesses, ...attractions, ...nature, ...culture, ...restaurants];
+      break;
+    default:
+      demoBusinesses = swedishBusinesses;
+  }
 
   return {
     businesses: demoBusinesses,

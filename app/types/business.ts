@@ -47,3 +47,27 @@ export interface SearchResult {
   swedishCount: number;
   searchArea: SearchArea;
 }
+
+export type SearchType = 
+  | 'swedish_businesses'
+  | 'attractions'
+  | 'nature'
+  | 'culture'
+  | 'restaurants'
+  | 'all';
+
+export interface SearchTypeConfig {
+  id: SearchType;
+  label: string;
+  description: string;
+  icon: string;
+}
+
+export const searchTypeConfigs: SearchTypeConfig[] = [
+  { id: 'swedish_businesses', label: 'Svenska Foretag', description: 'Svenskagda foretag', icon: 'flag' },
+  { id: 'attractions', label: 'Sevardheter', description: 'Turistattraktioner', icon: 'camera' },
+  { id: 'nature', label: 'Natur & Parker', description: 'Parker och strander', icon: 'trees' },
+  { id: 'culture', label: 'Kultur', description: 'Museum och kyrkor', icon: 'landmark' },
+  { id: 'restaurants', label: 'Restauranger', description: 'Mat och dryck', icon: 'utensils' },
+  { id: 'all', label: 'Allt', description: 'Sok efter allt', icon: 'search' },
+];

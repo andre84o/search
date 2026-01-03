@@ -2,10 +2,11 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { SearchArea, Business, SearchResult } from './types/business';
+import { SearchArea, Business, SearchResult, SearchType } from './types/business';
 import BusinessList from './components/BusinessCard/BusinessList';
 import { MapPin } from 'lucide-react';
 import Logo from './components/Logo';
+import SearchTypeMenu from './components/SearchTypeMenu';
 
 // Dynamic import for Map to avoid SSR issues with Leaflet
 const MapContainer = dynamic(() => import('./components/Map/MapContainer'), {
@@ -27,6 +28,8 @@ export default function Home() {
   const [showOnlySwedish, setShowOnlySwedish] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [searchType, setSearchType] = useState<SearchType>('swedish_businesses');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Load favorites from localStorage on mount
   useEffect(() => {
@@ -68,11 +71,11 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ area }),
+        body: JSON.stringify({ area, searchType }),
       });
 
       if (!response.ok) {
-        throw new Error('Kunde inte hämta företag');
+        throw new Error('Kunde inte hämta platser');
       }
 
       const data: SearchResult = await response.json();
@@ -86,11 +89,18 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [searchType]);
 
   const handleToggleSwedish = useCallback(() => {
     setShowOnlySwedish((prev) => !prev);
   }, []);
+
+  const handleSearchTypeChange = (type: SearchType) => {
+    setSearchType(type);
+    setIsMenuOpen(false);
+    setHasSearched(false);
+    setBusinesses([]);
+  };
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
@@ -108,10 +118,12 @@ export default function Home() {
             </p>
           </div>
         </div>
-        <div className="text-right text-sm text-gray-500">
-          <p>Rita ett område på kartan</p>
-          <p>för att söka efter företag</p>
-        </div>
+        <SearchTypeMenu
+          searchType={searchType}
+          isOpen={isMenuOpen}
+          onToggle={() => setIsMenuOpen(!isMenuOpen)}
+          onChange={handleSearchTypeChange}
+        />
       </header>
 
       {/* Error banner */}
