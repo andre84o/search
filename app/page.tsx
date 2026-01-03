@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { SearchArea, Business, SearchResult } from './types/business';
 import BusinessList from './components/BusinessCard/BusinessList';
@@ -17,6 +17,8 @@ const MapContainer = dynamic(() => import('./components/Map/MapContainer'), {
   ),
 });
 
+const FAVORITES_KEY = 'swedish-businesses-favorites';
+
 export default function Home() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +26,37 @@ export default function Home() {
   const [swedishCount, setSwedishCount] = useState(0);
   const [showOnlySwedish, setShowOnlySwedish] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+
+  // Load favorites from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(FAVORITES_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setFavorites(new Set(parsed));
+      } catch (e) {
+        console.error('Failed to parse favorites:', e);
+      }
+    }
+  }, []);
+
+  // Save favorites to localStorage when changed
+  useEffect(() => {
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify([...favorites]));
+  }, [favorites]);
+
+  const handleToggleFavorite = useCallback((businessId: string) => {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(businessId)) {
+        next.delete(businessId);
+      } else {
+        next.add(businessId);
+      }
+      return next;
+    });
+  }, []);
 
   const handleAreaSelected = useCallback(async (area: SearchArea) => {
     setIsLoading(true);
@@ -104,6 +137,8 @@ export default function Home() {
             swedishCount={swedishCount}
             showOnlySwedish={showOnlySwedish}
             onToggleSwedish={handleToggleSwedish}
+            favorites={favorites}
+            onToggleFavorite={handleToggleFavorite}
           />
         </div>
       </div>
@@ -121,6 +156,8 @@ export default function Home() {
             swedishCount={swedishCount}
             showOnlySwedish={showOnlySwedish}
             onToggleSwedish={handleToggleSwedish}
+            favorites={favorites}
+            onToggleFavorite={handleToggleFavorite}
           />
         </div>
       </div>

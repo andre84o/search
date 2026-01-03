@@ -1,15 +1,17 @@
 'use client';
 
-import { MapPin, Phone, Globe, Star, Flag } from 'lucide-react';
+import { MapPin, Phone, Globe, Star, Flag, Heart } from 'lucide-react';
 import { Business } from '../../types/business';
 import { categoryConfig } from '../../lib/categoryIcons';
 import BusinessIcon from './BusinessIcon';
 
 interface BusinessCardProps {
   business: Business;
+  isFavorite?: boolean;
+  onToggleFavorite?: (id: string) => void;
 }
 
-export default function BusinessCard({ business }: BusinessCardProps) {
+export default function BusinessCard({ business, isFavorite, onToggleFavorite }: BusinessCardProps) {
   const categoryLabel = categoryConfig[business.category]?.label || 'Övrigt';
 
   return (
@@ -26,6 +28,20 @@ export default function BusinessCard({ business }: BusinessCardProps) {
           <div className="w-full h-full flex items-center justify-center">
             <BusinessIcon category={business.category} size="lg" />
           </div>
+        )}
+
+        {/* Favorite button */}
+        {onToggleFavorite && (
+          <button
+            onClick={() => onToggleFavorite(business.id)}
+            className="absolute top-2 left-2 p-1.5 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-colors shadow-sm"
+            title={isFavorite ? 'Ta bort från måste-besöka' : 'Lägg till i måste-besöka'}
+          >
+            <Heart
+              size={18}
+              className={isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-400'}
+            />
+          </button>
         )}
 
         {/* Swedish badge */}
