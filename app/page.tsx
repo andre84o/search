@@ -1,65 +1,129 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useCallback } from 'react';
+import dynamic from 'next/dynamic';
+import { SearchArea, Business, SearchResult } from './types/business';
+import BusinessList from './components/BusinessCard/BusinessList';
+import { MapPin } from 'lucide-react';
+import Logo from './components/Logo';
+
+// Dynamic import for Map to avoid SSR issues with Leaflet
+const MapContainer = dynamic(() => import('./components/Map/MapContainer'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full w-full bg-gray-100 flex items-center justify-center">
+      <div className="text-gray-500">Laddar karta...</div>
+    </div>
+  ),
+});
 
 export default function Home() {
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [swedishCount, setSwedishCount] = useState(0);
+  const [showOnlySwedish, setShowOnlySwedish] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleAreaSelected = useCallback(async (area: SearchArea) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/places', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ area }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Kunde inte hämta företag');
+      }
+
+      const data: SearchResult = await response.json();
+
+      setBusinesses(data.businesses);
+      setSwedishCount(data.swedishCount);
+      setHasSearched(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ett fel uppstod');
+      console.error('Search error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const handleToggleSwedish = useCallback(() => {
+    setShowOnlySwedish((prev) => !prev);
+  }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="h-screen flex flex-col bg-gray-100">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Logo size={48} />
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">
+              Svenska Företag i Torrevieja
+            </h1>
+            <p className="text-sm text-gray-500 flex items-center gap-1">
+              <MapPin size={14} />
+              Hitta svenskägda företag i Costa Blanca
+            </p>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="text-right text-sm text-gray-500">
+          <p>Rita ett område på kartan</p>
+          <p>för att söka efter företag</p>
         </div>
-      </main>
+      </header>
+
+      {/* Error banner */}
+      {error && (
+        <div className="bg-red-50 border-b border-red-200 px-4 py-2 text-red-700 text-sm">
+          {error}
+        </div>
+      )}
+
+      {/* Main content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Map - 60% width on desktop */}
+        <div className="w-full lg:w-3/5 h-full">
+          <MapContainer onAreaSelected={handleAreaSelected} isLoading={isLoading} />
+        </div>
+
+        {/* Business list - 40% width on desktop */}
+        <div className="hidden lg:block lg:w-2/5 h-full border-l border-gray-200">
+          <BusinessList
+            businesses={businesses}
+            isLoading={isLoading}
+            hasSearched={hasSearched}
+            swedishCount={swedishCount}
+            showOnlySwedish={showOnlySwedish}
+            onToggleSwedish={handleToggleSwedish}
+          />
+        </div>
+      </div>
+
+      {/* Mobile bottom sheet (simplified) */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 rounded-t-2xl shadow-lg max-h-[60vh] overflow-hidden">
+        <div className="p-3 border-b border-gray-100 flex justify-center">
+          <div className="w-10 h-1 bg-gray-300 rounded-full" />
+        </div>
+        <div className="overflow-y-auto max-h-[calc(60vh-44px)]">
+          <BusinessList
+            businesses={businesses}
+            isLoading={isLoading}
+            hasSearched={hasSearched}
+            swedishCount={swedishCount}
+            showOnlySwedish={showOnlySwedish}
+            onToggleSwedish={handleToggleSwedish}
+          />
+        </div>
+      </div>
     </div>
   );
 }
