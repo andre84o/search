@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Svenska Företag i Torrevieja - Hitta svenskägda företag",
-  description: "Hitta svenskägda företag i Torrevieja och Costa Blanca. Sök på kartan efter svenska företag i Spanien.",
+  title: "Torrevieja Guide - Hitta de bästa platserna",
+  description: "Upptäck restauranger, butiker och smultronställen i Torrevieja och Costa Blanca.",
   icons: {
     icon: '/icon.svg',
   },

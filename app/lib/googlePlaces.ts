@@ -1,6 +1,5 @@
-import { Business, SearchArea, SearchType } from '../types/business';
+import { Business, SearchArea, Nationality, PlaceType, nationalityConfigs, placeTypeConfigs } from '../types/business';
 import { mapGoogleTypeToCategory } from './categoryIcons';
-import { analyzeSwedishBusiness, getSwedishSearchQueries } from './swedishDetector';
 
 interface PlaceResult {
   place_id: string;
@@ -42,42 +41,70 @@ interface PlaceDetailsResponse {
 
 const GOOGLE_PLACES_BASE_URL = 'https://maps.googleapis.com/maps/api/place';
 
-// Get search queries based on search type
-function getSearchQueriesForType(searchType: SearchType): { keywords: string[]; types: string[] } {
-  switch (searchType) {
-    case 'swedish_businesses':
-      return { keywords: getSwedishSearchQueries(), types: [] };
-    case 'attractions':
-      return { keywords: ['tourist attraction', 'viewpoint', 'landmark'], types: ['tourist_attraction', 'point_of_interest'] };
-    case 'nature':
-      return { keywords: ['park', 'beach', 'nature reserve', 'garden'], types: ['park', 'natural_feature'] };
-    case 'culture':
-      return { keywords: ['museum', 'church', 'art gallery', 'historic'], types: ['museum', 'church', 'art_gallery'] };
-    case 'restaurants':
-      return { keywords: [], types: ['restaurant', 'cafe', 'bar'] };
-    case 'all':
-      return { keywords: [...getSwedishSearchQueries(), 'restaurant', 'attraction'], types: ['restaurant', 'tourist_attraction', 'museum', 'park'] };
-    default:
-      return { keywords: getSwedishSearchQueries(), types: [] };
+// Build search queries based on nationality and place type
+function getSearchQueries(nationality: Nationality, placeType: PlaceType): string[] {
+  const queries: string[] = [];
+
+  const nationalityConfig = nationalityConfigs.find(c => c.id === nationality);
+  const placeTypeConfig = placeTypeConfigs.find(c => c.id === placeType);
+
+  // Get nationality keywords
+  const nationalityKeywords = nationalityConfig?.keywords || [];
+
+  // Get place type keywords
+  const placeKeywords = placeTypeConfig?.keywords || [];
+
+  // If both are 'all', just do a general search
+  if (nationality === 'all' && placeType === 'all') {
+    return [''];
   }
+
+  // If only nationality is selected
+  if (nationality !== 'all' && placeType === 'all') {
+    return nationalityKeywords;
+  }
+
+  // If only place type is selected
+  if (nationality === 'all' && placeType !== 'all') {
+    return placeKeywords.length > 0 ? placeKeywords : [''];
+  }
+
+  // If both are selected, combine them
+  for (const natKeyword of nationalityKeywords) {
+    for (const placeKeyword of placeKeywords) {
+      queries.push(`${natKeyword} ${placeKeyword}`);
+    }
+    // Also search just the nationality keyword
+    queries.push(natKeyword);
+  }
+
+  return queries;
 }
 
+// Get Google place types for filtering
+function getGoogleTypes(placeType: PlaceType): string | undefined {
+  const config = placeTypeConfigs.find(c => c.id === placeType);
+  if (!config || config.googleTypes.length === 0) return undefined;
+  return config.googleTypes[0]; // Use the first type for the API
+}
 
 export async function searchPlacesInArea(
   area: SearchArea,
   apiKey: string,
-  searchType: SearchType = 'swedish_businesses'
+  nationality: Nationality = 'all',
+  placeType: PlaceType = 'all'
 ): Promise<Business[]> {
   const center = getAreaCenter(area);
   const radius = getAreaRadius(area);
 
-  const swedishQueries = getSwedishSearchQueries();
+  const searchQueries = getSearchQueries(nationality, placeType);
+  const googleType = getGoogleTypes(placeType);
   const allPlaces: Map<string, PlaceResult> = new Map();
 
-  // Search with each Swedish-related keyword
-  for (const query of swedishQueries) {
+  // Search with each keyword combination
+  for (const query of searchQueries) {
     try {
-      const places = await nearbySearch(center, radius, query, apiKey);
+      const places = await nearbySearch(center, radius, query, apiKey, googleType);
       for (const place of places) {
         if (!allPlaces.has(place.place_id)) {
           allPlaces.set(place.place_id, place);
@@ -88,19 +115,21 @@ export async function searchPlacesInArea(
     }
   }
 
-  // Also do a general search and filter
-  try {
-    const generalPlaces = await nearbySearch(center, radius, '', apiKey);
-    for (const place of generalPlaces) {
-      if (!allPlaces.has(place.place_id)) {
-        allPlaces.set(place.place_id, place);
+  // Also do a type-based search if place type is specified
+  if (googleType && placeType !== 'all') {
+    try {
+      const typePlaces = await nearbySearch(center, radius, '', apiKey, googleType);
+      for (const place of typePlaces) {
+        if (!allPlaces.has(place.place_id)) {
+          allPlaces.set(place.place_id, place);
+        }
       }
+    } catch (error) {
+      console.error('Error in type search:', error);
     }
-  } catch (error) {
-    console.error('Error in general search:', error);
   }
 
-  // Convert to Business objects and filter
+  // Convert to Business objects
   const businesses: Business[] = [];
 
   for (const place of allPlaces.values()) {
@@ -109,7 +138,7 @@ export async function searchPlacesInArea(
       continue;
     }
 
-    // Get additional details for promising places
+    // Get additional details
     let details: PlaceResult | null = null;
     try {
       details = await getPlaceDetails(place.place_id, apiKey);
@@ -119,14 +148,8 @@ export async function searchPlacesInArea(
 
     const mergedPlace = details ? { ...place, ...details } : place;
 
-    // Analyze if Swedish
-    const reviewTexts = mergedPlace.reviews?.map((r) => r.text) || [];
-    const swedishAnalysis = analyzeSwedishBusiness(
-      mergedPlace.name,
-      mergedPlace.formatted_address,
-      mergedPlace.website,
-      reviewTexts
-    );
+    // Check if matches the nationality filter
+    const matchesNationality = checkNationalityMatch(mergedPlace, nationality);
 
     const business: Business = {
       id: place.place_id,
@@ -145,27 +168,41 @@ export async function searchPlacesInArea(
         lat: mergedPlace.geometry.location.lat,
         lng: mergedPlace.geometry.location.lng,
       },
-      isSwedish: swedishAnalysis.isSwedish,
-      swedishConfidence: swedishAnalysis.confidence,
-      swedishIndicators: swedishAnalysis.indicators,
+      isSwedish: matchesNationality,
+      swedishConfidence: matchesNationality ? 80 : 0,
+      swedishIndicators: matchesNationality ? [`Matchar ${nationality}`] : [],
     };
 
     businesses.push(business);
   }
 
-  // Sort: Swedish first, then by rating
-  return businesses.sort((a, b) => {
-    if (a.isSwedish && !b.isSwedish) return -1;
-    if (!a.isSwedish && b.isSwedish) return 1;
-    return (b.swedishConfidence || 0) - (a.swedishConfidence || 0);
-  });
+  // Sort by rating
+  return businesses.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+}
+
+// Check if a place matches the selected nationality
+function checkNationalityMatch(place: PlaceResult, nationality: Nationality): boolean {
+  if (nationality === 'all') return true;
+
+  const config = nationalityConfigs.find(c => c.id === nationality);
+  if (!config) return false;
+
+  const searchText = [
+    place.name,
+    place.formatted_address,
+    place.website,
+    ...(place.reviews?.map(r => r.text) || [])
+  ].join(' ').toLowerCase();
+
+  return config.keywords.some(keyword => searchText.includes(keyword.toLowerCase()));
 }
 
 async function nearbySearch(
   center: { lat: number; lng: number },
   radius: number,
   keyword: string,
-  apiKey: string
+  apiKey: string,
+  type?: string
 ): Promise<PlaceResult[]> {
   const params = new URLSearchParams({
     location: `${center.lat},${center.lng}`,
@@ -175,6 +212,10 @@ async function nearbySearch(
 
   if (keyword) {
     params.set('keyword', keyword);
+  }
+
+  if (type) {
+    params.set('type', type);
   }
 
   const response = await fetch(

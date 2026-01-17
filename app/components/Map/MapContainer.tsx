@@ -153,19 +153,10 @@ export default function MapContainer({ onAreaSelected, isLoading }: MapContainer
         <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-[1000]">
           <div className="bg-white rounded-lg p-4 shadow-lg flex items-center gap-3">
             <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full" />
-            <span className="text-gray-700">Söker efter svenska företag...</span>
+            <span className="text-gray-700">Söker efter platser...</span>
           </div>
         </div>
       )}
-
-      {/* Instructions overlay */}
-      <div className="absolute top-4 left-4 z-[1000] bg-white/95 backdrop-blur-sm rounded-lg p-3 shadow-lg max-w-xs">
-        <h3 className="font-semibold text-gray-900 text-sm mb-1">Så här gör du:</h3>
-        <p className="text-gray-600 text-xs">
-          Använd verktygen till höger för att rita ett område på kartan.
-          Välj rektangel, polygon eller cirkel.
-        </p>
-      </div>
     </div>
   );
 }

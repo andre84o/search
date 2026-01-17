@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SearchArea, SearchResult, SearchType } from '../../types/business';
+import { SearchArea, SearchResult, Nationality, PlaceType } from '../../types/business';
 import { searchPlacesInArea } from '../../lib/googlePlaces';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { area, searchType = 'swedish_businesses' } = body as {
+    const { area, nationality = 'all', placeType = 'all' } = body as {
       area: SearchArea;
-      searchType?: SearchType;
+      nationality?: Nationality;
+      placeType?: PlaceType;
     };
 
     if (!area || !area.coordinates || area.coordinates.length === 0) {
@@ -21,10 +22,10 @@ export async function POST(request: NextRequest) {
 
     if (!apiKey) {
       // Return demo data if no API key
-      return NextResponse.json(getDemoData(area, searchType));
+      return NextResponse.json(getDemoData(area, nationality, placeType));
     }
 
-    const businesses = await searchPlacesInArea(area, apiKey, searchType);
+    const businesses = await searchPlacesInArea(area, apiKey, nationality, placeType);
 
     const result: SearchResult = {
       businesses,
@@ -44,8 +45,8 @@ export async function POST(request: NextRequest) {
 }
 
 // Demo data for testing without API key
-function getDemoData(area: SearchArea, searchType: SearchType): SearchResult {
-  const swedishBusinesses = [
+function getDemoData(area: SearchArea, nationality: Nationality, placeType: PlaceType): SearchResult {
+  const allDemoPlaces = [
     {
       id: 'demo-1',
       name: 'Svenska Baren Torrevieja',
@@ -60,30 +61,43 @@ function getDemoData(area: SearchArea, searchType: SearchType): SearchResult {
       location: { lat: 37.9785, lng: -0.6823 },
       isSwedish: true,
       swedishConfidence: 85,
-      swedishIndicators: ['Nyckelord: "svenska"', 'Svensk domän (.se)'],
+      swedishIndicators: ['Svenska'],
     },
     {
       id: 'demo-2',
-      name: 'Stockholm Café',
-      address: 'Avenida Habaneras 22, 03182 Torrevieja, Alicante, Spain',
+      name: 'The British Pub',
+      address: 'Avenida Habaneras 22, 03182 Torrevieja',
       phone: '+34 965 789 012',
       website: undefined,
       photoUrl: undefined,
       rating: 4.2,
       totalRatings: 89,
-      types: ['cafe', 'bakery'],
-      category: 'cafe' as const,
+      types: ['bar', 'pub'],
+      category: 'bar' as const,
       location: { lat: 37.9812, lng: -0.6801 },
-      isSwedish: true,
-      swedishConfidence: 50,
-      swedishIndicators: ['Nyckelord: "stockholm"'],
+      isSwedish: false,
+      swedishConfidence: 0,
+      swedishIndicators: [],
     },
-  ];
-
-  const attractions = [
+    {
+      id: 'demo-3',
+      name: 'Ristorante Italiano Da Marco',
+      address: 'Calle Mayor 45, Torrevieja',
+      phone: '+34 965 123 456',
+      website: undefined,
+      photoUrl: undefined,
+      rating: 4.6,
+      totalRatings: 234,
+      types: ['restaurant', 'italian'],
+      category: 'restaurant' as const,
+      location: { lat: 37.9798, lng: -0.6815 },
+      isSwedish: false,
+      swedishConfidence: 0,
+      swedishIndicators: [],
+    },
     {
       id: 'demo-attr-1',
-      name: 'Parque Natural de las Lagunas de La Mata',
+      name: 'Parque Natural de las Lagunas',
       address: 'Torrevieja, Alicante, Spain',
       phone: undefined,
       website: undefined,
@@ -98,7 +112,7 @@ function getDemoData(area: SearchArea, searchType: SearchType): SearchResult {
       swedishIndicators: [],
     },
     {
-      id: 'demo-attr-2',
+      id: 'demo-beach-1',
       name: 'Playa del Cura',
       address: 'Torrevieja, Alicante, Spain',
       phone: undefined,
@@ -106,37 +120,15 @@ function getDemoData(area: SearchArea, searchType: SearchType): SearchResult {
       photoUrl: undefined,
       rating: 4.5,
       totalRatings: 2340,
-      types: ['beach', 'point_of_interest'],
+      types: ['beach', 'natural_feature'],
       category: 'other' as const,
       location: { lat: 37.9765, lng: -0.6834 },
       isSwedish: false,
       swedishConfidence: 0,
       swedishIndicators: [],
     },
-  ];
-
-  const nature = [
     {
-      id: 'demo-nat-1',
-      name: 'Salinas de Torrevieja',
-      address: 'Torrevieja, Alicante, Spain',
-      phone: undefined,
-      website: undefined,
-      photoUrl: undefined,
-      rating: 4.8,
-      totalRatings: 3450,
-      types: ['natural_feature', 'point_of_interest'],
-      category: 'other' as const,
-      location: { lat: 37.9845, lng: -0.7123 },
-      isSwedish: false,
-      swedishConfidence: 0,
-      swedishIndicators: [],
-    },
-  ];
-
-  const culture = [
-    {
-      id: 'demo-cult-1',
+      id: 'demo-museum-1',
       name: 'Museo del Mar y de la Sal',
       address: 'Calle Patricio Pérez 10, Torrevieja',
       phone: '+34 965 710 273',
@@ -151,68 +143,32 @@ function getDemoData(area: SearchArea, searchType: SearchType): SearchResult {
       swedishConfidence: 0,
       swedishIndicators: [],
     },
-    {
-      id: 'demo-cult-2',
-      name: 'Iglesia de la Inmaculada Concepción',
-      address: 'Plaza de la Constitución, Torrevieja',
-      phone: undefined,
-      website: undefined,
-      photoUrl: undefined,
-      rating: 4.6,
-      totalRatings: 234,
-      types: ['church', 'place_of_worship'],
-      category: 'other' as const,
-      location: { lat: 37.9778, lng: -0.6845 },
-      isSwedish: false,
-      swedishConfidence: 0,
-      swedishIndicators: [],
-    },
   ];
 
-  const restaurants = [
-    {
-      id: 'demo-rest-1',
-      name: 'Restaurante La Esquina',
-      address: 'Calle Ramón Gallud 45, Torrevieja',
-      phone: '+34 965 123 789',
-      website: undefined,
-      photoUrl: undefined,
-      rating: 4.4,
-      totalRatings: 789,
-      types: ['restaurant', 'food'],
-      category: 'restaurant' as const,
-      location: { lat: 37.9801, lng: -0.6798 },
-      isSwedish: false,
-      swedishConfidence: 0,
-      swedishIndicators: [],
-    },
-  ];
-
-  let demoBusinesses;
-  switch (searchType) {
-    case 'attractions':
-      demoBusinesses = attractions;
-      break;
-    case 'nature':
-      demoBusinesses = nature;
-      break;
-    case 'culture':
-      demoBusinesses = culture;
-      break;
-    case 'restaurants':
-      demoBusinesses = restaurants;
-      break;
-    case 'all':
-      demoBusinesses = [...swedishBusinesses, ...attractions, ...nature, ...culture, ...restaurants];
-      break;
-    default:
-      demoBusinesses = swedishBusinesses;
+  // Filter based on placeType
+  let filtered = allDemoPlaces;
+  if (placeType !== 'all') {
+    const typeFilters: Record<string, string[]> = {
+      restaurants: ['restaurant'],
+      cafes: ['cafe'],
+      bars: ['bar', 'pub'],
+      attractions: ['tourist_attraction', 'point_of_interest'],
+      nature: ['park', 'natural_feature'],
+      culture: ['museum', 'church'],
+      beaches: ['beach'],
+    };
+    const allowedTypes = typeFilters[placeType] || [];
+    if (allowedTypes.length > 0) {
+      filtered = filtered.filter(place =>
+        place.types.some(t => allowedTypes.includes(t))
+      );
+    }
   }
 
   return {
-    businesses: demoBusinesses,
-    total: demoBusinesses.length,
-    swedishCount: demoBusinesses.filter((b) => b.isSwedish).length,
+    businesses: filtered,
+    total: filtered.length,
+    swedishCount: filtered.filter((b) => b.isSwedish).length,
     searchArea: area,
   };
 }
