@@ -28,33 +28,35 @@ export default function PlaceTypeMenu({ placeType, isOpen, onToggle, onChange }:
   const rotateClass = isOpen ? 'rotate-180' : '';
 
   return (
-    <div className="relative">
+    <div className="relative w-full sm:w-auto">
       <button
         onClick={onToggle}
-        className="flex items-center gap-2 px-4 py-2.5 glass-panel rounded-xl hover:bg-white/10 transition-colors min-w-[200px] text-white border-white/10 shadow-[0_4px_12px_rgba(0,0,0,0.1)]"
+        className="w-full flex items-center justify-between gap-1.5 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 glass-panel rounded-lg sm:rounded-xl hover:bg-white/10 transition-colors min-w-0 sm:min-w-[200px] text-white border-white/10 shadow-[0_4px_12px_rgba(0,0,0,0.1)]"
       >
-        <span className="text-slate-300">{iconMap[currentConfig.icon]}</span>
-        <span className="font-medium flex-1 text-left tracking-wide">{currentConfig.label}</span>
-        <ChevronDown size={16} className={'text-slate-400 transition-transform ' + rotateClass} />
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+          <span className="text-slate-300 flex items-center justify-center shrink-0 w-3.5 h-3.5 sm:w-4 sm:h-4 [&>svg]:w-full [&>svg]:h-full">{iconMap[currentConfig.icon]}</span>
+          <span className="font-medium flex-1 text-left tracking-wide text-xs sm:text-base truncate">{currentConfig.label}</span>
+        </div>
+        <ChevronDown size={14} className={'text-slate-400 transition-transform sm:w-4 sm:h-4 shrink-0 ' + rotateClass} />
       </button>
 
       {isOpen && (
         <>
-          <div className="absolute top-full mt-2 left-0 w-full glass-panel rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.3)] z-[70] overflow-hidden animate-fade-in border-white/10 max-h-[300px] overflow-y-auto custom-scrollbar">
+          <div className="absolute top-full mt-2 right-0 min-w-[200px] w-full sm:min-w-[200px] sm:w-auto glass-panel rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.3)] z-[70] overflow-hidden animate-fade-in border-white/10 max-h-[60vh] sm:max-h-[300px] overflow-y-auto custom-scrollbar">
             {placeTypeConfigs.map((config) => (
               <button
                 key={config.id}
                 onClick={() => onChange(config.id)}
-                className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${
+                className={`w-full text-left px-3 sm:px-4 py-2 sm:py-3 flex items-center gap-2 sm:gap-3 transition-colors text-xs sm:text-base ${
                   placeType === config.id
                     ? 'bg-blue-600/30 text-white font-medium'
-                    : 'text-slate-300 hover:bg-white/5'
+                    : 'text-slate-300 hover:bg-white/5 active:bg-white/10'
                 }`}
               >
-                <span className={placeType === config.id ? 'text-white' : 'text-slate-400'}>
+                <span className={`flex items-center justify-center shrink-0 w-4 h-4 sm:w-5 sm:h-5 [&>svg]:w-full [&>svg]:h-full ${placeType === config.id ? 'text-white' : 'text-slate-400'}`}>
                   {iconMap[config.icon]}
                 </span>
-                <span>{config.label}</span>
+                <span className="truncate">{config.label}</span>
               </button>
             ))}
           </div>

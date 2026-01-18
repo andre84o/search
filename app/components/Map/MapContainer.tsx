@@ -79,8 +79,11 @@ export default function MapContainer({ onAreaSelected, isLoading }: MapContainer
     });
 
     // Initialize map
-    const map = L.map(mapContainerRef.current).setView(TORREVIEJA_CENTER, DEFAULT_ZOOM);
+    const map = L.map(mapContainerRef.current, { zoomControl: false }).setView(TORREVIEJA_CENTER, DEFAULT_ZOOM);
     mapRef.current = map;
+
+    // Move zoom control to top-right to avoid overlap with header
+    L.control.zoom({ position: 'topright' }).addTo(map);
 
     // Add tile layer (OpenStreetMap)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

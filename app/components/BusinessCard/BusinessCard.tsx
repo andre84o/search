@@ -15,9 +15,9 @@ export default function BusinessCard({ business, isFavorite, onToggleFavorite }:
   const categoryLabel = categoryConfig[business.category]?.label || 'Övrigt';
 
   return (
-    <div className="lux-card rounded-xl overflow-hidden group">
+    <div className="lux-card rounded-lg sm:rounded-xl overflow-hidden group">
       {/* Image or placeholder */}
-      <div className="relative h-40 bg-slate-800/50">
+      <div className="relative h-32 sm:h-40 bg-slate-800/50">
         {business.photoUrl ? (
           <img
             src={business.photoUrl}
@@ -40,56 +40,56 @@ export default function BusinessCard({ business, isFavorite, onToggleFavorite }:
               e.stopPropagation();
               onToggleFavorite(business.id);
             }}
-            className="absolute top-2 left-2 p-2 rounded-full bg-black/40 backdrop-blur-md hover:bg-black/60 transition-colors border border-white/10"
+            className="absolute top-1.5 sm:top-2 left-1.5 sm:left-2 p-2 sm:p-2 rounded-full bg-black/40 backdrop-blur-md hover:bg-black/60 active:bg-black/70 transition-colors border border-white/10"
             title={isFavorite ? 'Ta bort från måste-besöka' : 'Lägg till i måste-besöka'}
           >
             <Heart
-              size={18}
-              className={isFavorite ? 'text-red-500 fill-red-500' : 'text-slate-300'}
+              size={16}
+              className={`sm:w-[18px] sm:h-[18px] ${isFavorite ? 'text-red-500 fill-red-500' : 'text-slate-300'}`}
             />
           </button>
         )}
 
         {/* Swedish badge */}
         {business.isSwedish && (
-          <div className="absolute top-2 right-2 bg-blue-600/90 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg border border-blue-400/30">
-            <Flag size={12} />
+          <div className="absolute top-1.5 sm:top-2 right-1.5 sm:right-2 bg-blue-600/90 backdrop-blur-sm text-white text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full flex items-center gap-1 shadow-lg border border-blue-400/30">
+            <Flag size={10} className="sm:w-3 sm:h-3" />
             <span>SVENSKT</span>
           </div>
         )}
 
         {/* Rating */}
         {business.rating && (
-          <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-white text-xs font-medium px-2 py-1 rounded-full flex items-center gap-1 border border-white/10">
-            <Star size={12} className="text-yellow-400 fill-yellow-400" />
+          <div className="absolute bottom-1.5 sm:bottom-2 left-1.5 sm:left-2 bg-black/60 backdrop-blur-md text-white text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full flex items-center gap-1 border border-white/10">
+            <Star size={10} className="text-yellow-400 fill-yellow-400 sm:w-3 sm:h-3" />
             <span>{business.rating.toFixed(1)}</span>
             {business.totalRatings && (
-              <span className="text-slate-400">({business.totalRatings})</span>
+              <span className="text-slate-400 hidden sm:inline">({business.totalRatings})</span>
             )}
           </div>
         )}
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-3 sm:p-4">
         {/* Header */}
-        <div className="flex items-start gap-3 mb-3">
-          <div className="p-2 bg-white/5 rounded-lg border border-white/10 group-hover:border-yellow-500/30 transition-colors">
+        <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
+          <div className="p-1.5 sm:p-2 bg-white/5 rounded-md sm:rounded-lg border border-white/10 group-hover:border-yellow-500/30 transition-colors">
              <BusinessIcon category={business.category} size="sm" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-lg text-slate-100 truncate group-hover:text-yellow-400 transition-colors">{business.name}</h3>
-            <span className="text-xs text-slate-400 uppercase tracking-wider">{categoryLabel}</span>
+            <h3 className="font-bold text-base sm:text-lg text-slate-100 truncate group-hover:text-yellow-400 transition-colors">{business.name}</h3>
+            <span className="text-[10px] sm:text-xs text-slate-400 uppercase tracking-wider">{categoryLabel}</span>
           </div>
         </div>
 
         {/* Swedish indicators */}
         {business.isSwedish && business.swedishIndicators.length > 0 && (
-          <div className="mb-4 flex flex-wrap gap-1.5">
+          <div className="mb-3 sm:mb-4 flex flex-wrap gap-1 sm:gap-1.5">
             {business.swedishIndicators.slice(0, 3).map((indicator, i) => (
               <span
                 key={i}
-                className="text-[10px] bg-blue-500/10 text-blue-300 border border-blue-500/20 px-2 py-0.5 rounded-full"
+                className="text-[9px] sm:text-[10px] bg-blue-500/10 text-blue-300 border border-blue-500/20 px-1.5 sm:px-2 py-0.5 rounded-full"
               >
                 {indicator}
               </span>
@@ -98,10 +98,10 @@ export default function BusinessCard({ business, isFavorite, onToggleFavorite }:
         )}
 
         {/* Details */}
-        <div className="space-y-2.5">
+        <div className="space-y-2 sm:space-y-2.5">
           {/* Address */}
-          <div className="flex items-start gap-2.5 text-sm text-slate-300">
-            <MapPin size={16} className="flex-shrink-0 mt-0.5 text-slate-500" />
+          <div className="flex items-start gap-2 sm:gap-2.5 text-xs sm:text-sm text-slate-300">
+            <MapPin size={14} className="flex-shrink-0 mt-0.5 text-slate-500 sm:w-4 sm:h-4" />
             <span className="line-clamp-2">{business.address}</span>
           </div>
 
@@ -109,9 +109,9 @@ export default function BusinessCard({ business, isFavorite, onToggleFavorite }:
           {business.phone && (
             <a
               href={`tel:${business.phone}`}
-              className="flex items-center gap-2.5 text-sm text-slate-300 hover:text-yellow-400 transition-colors"
+              className="flex items-center gap-2 sm:gap-2.5 text-xs sm:text-sm text-slate-300 hover:text-yellow-400 active:text-yellow-500 transition-colors py-0.5"
             >
-              <Phone size={16} className="flex-shrink-0 text-slate-500" />
+              <Phone size={14} className="flex-shrink-0 text-slate-500 sm:w-4 sm:h-4" />
               <span>{business.phone}</span>
             </a>
           )}
@@ -122,9 +122,9 @@ export default function BusinessCard({ business, isFavorite, onToggleFavorite }:
               href={business.website}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2.5 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+              className="flex items-center gap-2 sm:gap-2.5 text-xs sm:text-sm text-blue-400 hover:text-blue-300 active:text-blue-200 transition-colors py-0.5"
             >
-              <Globe size={16} className="flex-shrink-0" />
+              <Globe size={14} className="flex-shrink-0 sm:w-4 sm:h-4" />
               <span className="truncate">Besök hemsida</span>
             </a>
           )}
@@ -132,8 +132,8 @@ export default function BusinessCard({ business, isFavorite, onToggleFavorite }:
 
         {/* Confidence meter */}
         {business.isSwedish && (
-          <div className="mt-4 pt-3 border-t border-white/5">
-            <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1.5 uppercase tracking-wide font-medium">
+          <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t border-white/5">
+            <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-slate-500 mb-1 sm:mb-1.5 uppercase tracking-wide font-medium">
               <span>Svensk sannolikhet</span>
               <span>{business.swedishConfidence}%</span>
             </div>

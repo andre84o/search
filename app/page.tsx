@@ -140,13 +140,15 @@ export default function Home() {
         )}
         
         {/* Floating Header */}
-        <header className="absolute top-4 left-4 right-4 md:right-auto md:w-auto z-50 pointer-events-auto">
-          <div className="glass-panel p-3 rounded-2xl shadow-2xl flex flex-col md:flex-row items-start md:items-center gap-4 border border-white/10 backdrop-blur-xl">
+        <header className="absolute top-2 sm:top-4 left-2 sm:left-4 right-2 sm:right-4 md:right-auto md:w-auto z-50 pointer-events-auto">
+          <div className="glass-panel p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-2xl flex flex-row items-center gap-2 sm:gap-4 border border-white/10 backdrop-blur-xl">
             {/* Brand */}
-            <div className="flex items-center gap-4 pl-1">
-              <Logo size={52} />
-              <div className="hidden md:block">
-                <h1 className="text-xl font-bold text-white tracking-tight">
+            <div className="flex items-center gap-2 sm:gap-4 pl-1 shrink-0">
+              <div className="w-9 h-9 sm:w-[52px] sm:h-[52px] [&>svg]:w-full [&>svg]:h-full">
+                <Logo />
+              </div>
+              <div className="hidden sm:block">
+                <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600">Torrevieja</span> Guide
                 </h1>
                 <p className="text-xs text-slate-400 font-medium tracking-wide flex items-center gap-1">
@@ -156,38 +158,42 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="w-px h-10 bg-white/10 hidden md:block" />
+            <div className="w-px h-8 sm:h-10 bg-white/10 hidden sm:block" />
 
             {/* Filter Menus */}
-            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-              <NationalityMenu
-                nationality={nationality}
-                isOpen={isNationalityMenuOpen}
-                onToggle={() => {
-                  setIsNationalityMenuOpen(!isNationalityMenuOpen);
-                  setIsPlaceTypeMenuOpen(false);
-                }}
-                onChange={handleNationalityChange}
-              />
-              <PlaceTypeMenu
-                placeType={placeType}
-                isOpen={isPlaceTypeMenuOpen}
-                onToggle={() => {
-                  setIsPlaceTypeMenuOpen(!isPlaceTypeMenuOpen);
-                  setIsNationalityMenuOpen(false);
-                }}
-                onChange={handlePlaceTypeChange}
-              />
+            <div className="flex items-center gap-1.5 sm:gap-3 flex-1 sm:flex-none">
+              <div className="flex-1 min-w-0 sm:flex-none">
+                <NationalityMenu
+                  nationality={nationality}
+                  isOpen={isNationalityMenuOpen}
+                  onToggle={() => {
+                    setIsNationalityMenuOpen(!isNationalityMenuOpen);
+                    setIsPlaceTypeMenuOpen(false);
+                  }}
+                  onChange={handleNationalityChange}
+                />
+              </div>
+              <div className="flex-1 min-w-0 sm:flex-none">
+                <PlaceTypeMenu
+                  placeType={placeType}
+                  isOpen={isPlaceTypeMenuOpen}
+                  onToggle={() => {
+                    setIsPlaceTypeMenuOpen(!isPlaceTypeMenuOpen);
+                    setIsNationalityMenuOpen(false);
+                  }}
+                  onChange={handlePlaceTypeChange}
+                />
+              </div>
             </div>
           </div>
         </header>
 
         {/* Error Notification */}
         {error && (
-          <div className="absolute top-24 left-1/2 -translate-x-1/2 md:translate-x-0 md:left-4 z-50 pointer-events-auto">
-             <div className="glass-panel bg-red-500/20 border-red-500/30 text-white px-6 py-3 rounded-xl shadow-xl flex items-center gap-3 backdrop-blur-md">
-                <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
-                {error}
+          <div className="absolute top-16 sm:top-24 left-2 right-2 sm:left-4 sm:right-auto sm:w-auto z-50 pointer-events-auto">
+             <div className="glass-panel bg-red-500/20 border-red-500/30 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl shadow-xl flex items-center gap-2 sm:gap-3 backdrop-blur-md text-sm sm:text-base">
+                <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse shrink-0" />
+                <span className="truncate">{error}</span>
              </div>
           </div>
         )}
@@ -209,37 +215,39 @@ export default function Home() {
 
         {/* Mobile Bottom Sheet Toggle (Fab) - Only show if not open */}
         {!showMobileSheet && (
-           <button 
+           <button
              onClick={() => setShowMobileSheet(true)}
-             className="lg:hidden absolute bottom-6 right-6 h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-600/40 text-white flex items-center justify-center pointer-events-auto z-40 hover:scale-105 transition-transform"
+             className="lg:hidden absolute bottom-4 sm:bottom-6 right-4 sm:right-6 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-600/40 text-white flex items-center justify-center pointer-events-auto z-40 active:scale-95 hover:scale-105 transition-transform"
+             aria-label="Öppna resultat"
            >
-              <Menu size={24} />
+              <Menu size={20} className="sm:w-6 sm:h-6" />
            </button>
         )}
 
         {/* Mobile Bottom Sheet */}
-        <div 
-          className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-auto transition-transform duration-500 cubic-bezier(0.32, 0.72, 0, 1) ${
-            showMobileSheet ? 'translate-y-0' : 'translate-y-[90%]'
+        <div
+          className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-auto transition-transform duration-300 ease-out ${
+            showMobileSheet ? 'translate-y-0' : 'translate-y-full'
           }`}
         >
           {/* Handle/Header for dragging (visual only for now) or toggling */}
-          <div 
-            onClick={() => setShowMobileSheet(!showMobileSheet)} 
-            className="h-14 glass-panel rounded-t-3xl flex items-center justify-center cursor-pointer border-b-0 relative"
+          <div
+            onClick={() => setShowMobileSheet(!showMobileSheet)}
+            className="h-12 sm:h-14 glass-panel rounded-t-2xl sm:rounded-t-3xl flex items-center justify-center cursor-pointer border-b-0 relative touch-none"
           >
-             <div className="w-12 h-1.5 bg-slate-500/50 rounded-full" />
+             <div className="w-10 sm:w-12 h-1 sm:h-1.5 bg-slate-500/50 rounded-full" />
              {showMobileSheet && (
-               <button 
+               <button
                  onClick={(e) => { e.stopPropagation(); setShowMobileSheet(false); }}
-                 className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-400"
+                 className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 p-2 text-slate-400 active:text-white"
+                 aria-label="Stäng resultat"
                >
-                 <X size={20} />
+                 <X size={18} className="sm:w-5 sm:h-5" />
                </button>
              )}
           </div>
-          
-          <div className="h-[75vh] glass-panel border-t-0 bg-[#0B0E14]/90 backdrop-blur-xl">
+
+          <div className="h-[70vh] sm:h-[75vh] glass-panel border-t-0 bg-[#0B0E14]/95 backdrop-blur-xl pb-safe">
              <BusinessList
               businesses={businesses}
               isLoading={isLoading}

@@ -48,6 +48,20 @@ body {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Leaflet controls positioning adjustments */
+@media (max-width: 640px) {
+  .leaflet-top {
+    top: 4.5rem !important; /* Push controls down below the header on mobile */
+  }
+  .leaflet-left {
+    left: 0.5rem !important;
+  }
+  .leaflet-right {
+    right: 0.5rem !important;
+  }
+}
+
+
 .lux-card:hover {
   transform: translateY(-2px) scale(1.01);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
@@ -133,4 +147,59 @@ body {
 
 .animate-fade-in {
   animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Safe area insets for modern mobile devices (notch, home indicator) */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Touch optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Disable hover effects on touch devices for better performance */
+  .lux-card:hover {
+    transform: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border-color: var(--card-border);
+  }
+
+  /* Add active states instead */
+  .lux-card:active {
+    transform: scale(0.98);
+    opacity: 0.95;
+  }
+}
+
+/* Improve touch targets on mobile - EXCLUDING Leaflet controls */
+@media (max-width: 640px) {
+  button:not([class*="leaflet"]), 
+  a:not([class*="leaflet"]) {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Reset specific leaflet sizes if they accidentally get caught */
+  .leaflet-bar a {
+    min-height: 30px !important;
+    height: 30px !important;
+    width: 30px !important;
+    line-height: 30px !important;
+  }
+  
+  .leaflet-touch .leaflet-bar a {
+    min-height: 30px !important;
+    height: 30px !important;
+    width: 30px !important;
+    line-height: 30px !important;
+  }
+
+  /* Override for inline links and small icon buttons */
+  .inline-touch-target {
+    min-height: auto;
+    min-width: auto;
+  }
 }
